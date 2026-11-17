@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { describe, it } from 'node:test';
+import { describe, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { DEFAULT_BOX_STYLE, DEFAULT_TITLE, DEFAULT_VERSE_DECORATION, applyTiming, defaultBranding, planScenes, suggestEvenBoundaries, type WordByWordSurahFixture, type WordBoxScene } from '@instantreels/core';
 import { BrandingLayer } from './BrandingLayer.tsx';

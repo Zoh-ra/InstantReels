@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { describe, it } from 'node:test';
+import { describe, it } from 'vitest';
 import { classifyRow } from './classify.ts';
 
 const row = (rowNumber: number, a: string | number | null, b: string | null, c: string | null, d: string | number | null, e: string | null) => ({ rowNumber, a, b, c, d, e });

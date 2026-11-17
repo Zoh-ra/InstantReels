@@ -1,0 +1,7 @@
+# normalise line endings in the repository (Windows checkouts convert as configured)
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.ttf binary
+*.otf binary
+*.woff2 binary

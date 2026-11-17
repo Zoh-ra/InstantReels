@@ -169,7 +169,7 @@ export function SceneTimeline({ doc, frame, onSeek, currentScene, onBoundary, au
             ))}
             {onBoundary &&
               doc.scenes.slice(0, -1).map((s, i) => (
-                <li key={`b-${s.id}`} className="absolute inset-y-0 z-10 -ml-3 w-6" style={{ left: pct(s.endFrame) }}>
+                <li key={`b-${s.id}`} className="absolute inset-y-0 z-10 -ml-4 w-8" style={{ left: pct(s.endFrame) }}>
                   <button
                     type="button"
                     className="group flex h-full w-full cursor-ew-resize touch-none items-center justify-center"

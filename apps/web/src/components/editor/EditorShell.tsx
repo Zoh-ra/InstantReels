@@ -196,16 +196,16 @@ export function EditorShell({ project, initialDoc, bismillahSvg, surahName }: { 
         {timeline(false)}
       </footer>
 
-      {/* ───────────── mobile / tablet (< lg) ───────────── */}
-      <div className="flex min-h-0 flex-1 flex-col lg:hidden">
-        <div className="nebula-glow flex shrink-0 justify-center px-4 pt-3">
-          <div style={{ height: 'min(40dvh, 560px)', aspectRatio: '9 / 16' }}>{preview('h-full')}</div>
+      {/* ───────────── mobile / tablet (< lg): one scrolling column, sticky preview ───────────── */}
+      <div className="min-h-0 flex-1 overflow-y-auto lg:hidden" id="mobile-editor">
+        <div className="nebula-glow sticky top-0 z-20 flex justify-center bg-background/95 px-4 pt-3 pb-2 backdrop-blur">
+          <div style={{ height: 'min(36dvh, 520px)', aspectRatio: '9 / 16' }}>{preview('h-full')}</div>
         </div>
-        <div className="flex shrink-0 justify-center px-2 py-2">
+        <div className="flex justify-center px-2 py-2">
           <Transport doc={doc} frame={frame} playing={playing} onToggle={toggle} onSeek={seek} currentScene={currentScene} onMarkEnd={markEnd} />
         </div>
-        <div className="shrink-0 px-3 pb-2">{timeline(true)}</div>
-        <ScrollArea className="min-h-0 flex-1 border-t border-hairline bg-singularity">
+        <div className="px-3 pb-2">{timeline(true)}</div>
+        <div className="border-t border-hairline bg-singularity pb-4">
           {mobileTab === 'media' ? (
             <>
               {panels.media}
@@ -214,7 +214,9 @@ export function EditorShell({ project, initialDoc, bismillahSvg, surahName }: { 
           ) : (
             panels[mobileTab as keyof typeof panels]
           )}
-        </ScrollArea>
+        </div>
+      </div>
+      <div className="lg:hidden">
         <nav className="safe-bottom grid shrink-0 grid-cols-5 border-t border-hairline bg-singularity" aria-label="Panneaux">
           {[
             { id: 'content', label: 'Contenu', Icon: Layers },

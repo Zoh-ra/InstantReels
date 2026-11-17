@@ -59,6 +59,19 @@ async function recoverStale(): Promise<void> {
   if (r.rowCount) log(`recovered ${r.rowCount} stale job(s)`);
 }
 
+/** Removes exported MP4s past their expiry date (Storage object + database row). */
+let lastPurge = 0;
+async function purgeExpiredExports(): Promise<void> {
+  if (Date.now() - lastPurge < 3_600_000) return;
+  lastPurge = Date.now();
+  const r = await db.query<{ id: string; storage_path: string }>(`select id, storage_path from public.exported_videos where expires_at < now() limit 200`);
+  if (!r.rows.length) return;
+  const { error } = await supabase.storage.from('exports').remove(r.rows.map((x) => x.storage_path));
+  if (error) return log(`purge failed: ${error.message}`);
+  await db.query('delete from public.exported_videos where id = any($1::uuid[])', [r.rows.map((x) => x.id)]);
+  log(`purged ${r.rows.length} expired export(s)`);
+}
+
 async function claim(): Promise<JobRow | null> {
   const r = await db.query<JobRow>(
     `update public.render_jobs set status = 'rendering', worker_id = $1, started_at = now(), heartbeat_at = now(), attempts = attempts + 1, progress = 0.01, error = null
@@ -156,6 +169,7 @@ async function main(): Promise<void> {
   try {
     while (!stop) {
       await recoverStale();
+      await purgeExpiredExports().catch((e: Error) => log(`purge error: ${e.message}`));
       const job = await claim();
       if (job) {
         log(`job ${job.id} claimed (${job.preset})`);

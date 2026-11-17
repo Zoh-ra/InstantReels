@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { describe, it } from 'node:test';
+import { describe, it } from 'vitest';
 import { paginate, suggestPageSizes, validatePageSizes } from './pagination.ts';
 
 const words = (n: number) => Array.from({ length: n }, (_, i) => i + 1);

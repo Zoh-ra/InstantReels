@@ -3,17 +3,17 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "description": "Quranic educational reels \u2014 PWA + rendering worker",
+  "description": "Quranic educational reels — PWA + rendering worker",
   "workspaces": [
     "packages/*",
     "apps/*"
   ],
   "engines": {
-    "node": ">=20.9.0"
+    "node": ">=22.12.0"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json && npm run typecheck -w @instantreels/web",
-    "test": "node scripts/run-tests.mjs",
+    "test": "vitest run",
     "fixture:surah1": "tsx packages/importer/src/cli/extract-fixture.ts 1",
     "poc:render": "tsx apps/worker/src/poc/render-poc.ts",
     "poc:validate": "tsx apps/worker/src/poc/validate-poc.ts",
@@ -33,7 +33,7 @@
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.16",
-    "@types/node": "20.19.43",
+    "@types/node": "22.20.5",
     "@types/pg": "8.23.1",
     "@types/pngjs": "6.0.5",
     "@types/react": "19.3.0",
@@ -41,6 +41,7 @@
     "pg": "8.23.1",
     "potrace": "2.1.8",
     "tsx": "4.23.15",
-    "typescript": "6.0.3"
+    "typescript": "6.0.3",
+    "vitest": "5.1.0"
   }
 }

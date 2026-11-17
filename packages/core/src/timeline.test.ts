@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { describe, it } from 'node:test';
+import { describe, it } from 'vitest';
 import { audioDurationToFrames, secondsToFrame, spansFromEndMarks, suggestEvenBoundaries, validateTimeline } from './timeline.ts';
 
 describe('timeline', () => {

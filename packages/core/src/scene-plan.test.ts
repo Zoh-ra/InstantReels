@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { describe, it } from 'node:test';
+import { describe, it } from 'vitest';
 import type { WordByWordSurahFixture, WordByWordVerse } from './content.ts';
 import { bismillahIntroPolicy, sceneEndsVerse, surahNameCode, toArabicIndicDigits } from './quran-rules.ts';
 import { RenderDocumentSchema, DEFAULT_BOX_STYLE, DEFAULT_FULL_VERSE_STYLE, DEFAULT_TITLE, DEFAULT_VERSE_DECORATION, defaultBranding } from './render-document.ts';
