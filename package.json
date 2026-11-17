@@ -22,13 +22,22 @@
     "build:web": "npm run build -w @instantreels/web",
     "lint": "npm run lint -w @instantreels/web",
     "qa:responsive": "tsx scripts/qa/responsive-check.ts",
-    "asset:icons": "tsx scripts/assets/generate-icons.ts"
+    "asset:icons": "tsx scripts/assets/generate-icons.ts",
+    "db:validate": "tsx scripts/db/validate-migrations.ts",
+    "db:check": "tsx scripts/db/check-connection.ts",
+    "import:workbook": "tsx packages/importer/src/cli/import-workbook.ts",
+    "import:tanzil": "tsx packages/importer/src/cli/import-tanzil.ts",
+    "db:test-import": "tsx scripts/db/test-import.ts",
+    "db:migrate": "tsx scripts/db/migrate.ts"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.16",
     "@types/node": "20.19.43",
+    "@types/pg": "8.23.1",
     "@types/pngjs": "6.0.5",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
+    "pg": "8.23.1",
     "potrace": "2.1.8",
     "tsx": "4.23.15",
     "typescript": "6.0.3"

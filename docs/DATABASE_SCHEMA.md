@@ -1,6 +1,16 @@
 # Database Schema (proposed)
 
-Status: **Proposed (Phase 0)**. Migrations will live in `supabase/migrations/` from Phase 2.
+Status: **Phase 2 draft migrations written and validated locally — NOT applied to the Supabase project** (awaiting owner approval).
+
+- `supabase/migrations/20261117000100_quran_content.sql` — content sources, surahs, verses, words, word translations (workbook-only trigger), import batches/issues/staging, reference flags, audited revisions; RLS: signed-in users read content, nobody writes except the server-side importer.
+- `supabase/migrations/20261117000200_projects_and_auth.sql` — profiles (auto-created on sign-up, role not user-editable), country profiles FR/UK/SE, QR assets, projects (owner-only RLS, optimistic `document_version`, ownership immutable), audio assets, render jobs and exports (read-only for users), private storage buckets `audio` / `exports` / `branding` with per-user folders.
+- `npm run db:validate` applies both files to an in-memory Postgres (PGlite) with a minimal Supabase auth/storage emulation and runs 21 RLS/integrity checks (all pass). The emulation is not a full Supabase: final verification happens on the real project after approval.
+
+Simplification vs. the Phase 0 draft: scenes stay inside `projects.document` (Zod-validated RenderDocument); the normalized `project_scenes`/`scene_words` projection is postponed until a query needs it. Mode B tables (`verse_texts`, `verse_translations`) come with Phase 3.
+
+---
+
+Original Phase 0 design (kept for reference):
 
 ## 1. Content (read-only for users)
 
