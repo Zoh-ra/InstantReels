@@ -1,0 +1,9 @@
+{
+  "source": "./assets/branding/bismillah/source/bismillah-owner-supplied.jpg",
+  "sourceSha256": "86ddedc433c246b3e2ebd5e2e77cc51575ae57d337f076aaa55e5bfee03d1efc",
+  "method": "checkerboard >= 200 flattened, bicubic x3, potrace threshold 128 turdSize 6 optTolerance 0.2",
+  "tracedAt": "2026-11-16T22:52:05.428Z",
+  "aspectRatio": 4.1971,
+  "fidelityIoU": 0.9713,
+  "licence": "PENDING — provenance and rights of the supplied image not confirmed (see docs/DECISIONS.md D-14)"
+}

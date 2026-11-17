@@ -1,0 +1,57 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Next.js / build output
+.next/
+out/
+build/
+dist/
+*.tsbuildinfo
+next-env.d.ts
+
+# environment — never commit secrets
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+!.env.example
+
+# Supabase local
+supabase/.branches/
+supabase/.temp/
+
+# render outputs and temp files
+/output/
+/tmp/
+prototypes/**/out/
+*.mp4
+*.mov
+*.m4a
+*.wav
+!fixtures/**/*.wav
+
+# source workbook (owner data, kept outside the repo until decided)
+*.xlsx
+
+# test reports
+coverage/
+playwright-report/
+test-results/
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# logs
+npm-debug.log*
+*.log
+
+# shared assets copied into the web app by scripts/sync-web-assets.mjs
+apps/web/public/fonts/
+apps/web/public/branding/

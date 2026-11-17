@@ -1,0 +1,219 @@
+{
+  "source": {
+    "fileName": "Traduction mot a mot du Coran - Dr Usama Nonnenmacher (1).xlsx",
+    "sha256": "4be25003ad45308d8c427618d7ec09a74c4694b61d4da53efb18281effbab4a7",
+    "extractedAt": "2026-11-16T22:34:43.060Z"
+  },
+  "surah": 1,
+  "verses": [
+    {
+      "verse": 1,
+      "words": [
+        {
+          "position": 1,
+          "arabic": "بِسۡمِ",
+          "french": "(Je lis) avec (Le) Nom",
+          "sourceRow": 2
+        },
+        {
+          "position": 2,
+          "arabic": "ٱللَّهِ",
+          "french": "(d’)Allâh,",
+          "sourceRow": 3
+        },
+        {
+          "position": 3,
+          "arabic": "ٱلرَّحۡمَٰنِ",
+          "french": "L’Extrêmement Miséricordieux en Son Essence,",
+          "sourceRow": 4
+        },
+        {
+          "position": 4,
+          "arabic": "ٱلرَّحِيمِ",
+          "french": "Le Très Miséricordieux dans Ses Actions.",
+          "sourceRow": 5
+        }
+      ]
+    },
+    {
+      "verse": 2,
+      "words": [
+        {
+          "position": 1,
+          "arabic": "ٱلۡحَمۡدُ",
+          "french": "Tous les compliments",
+          "sourceRow": 7
+        },
+        {
+          "position": 2,
+          "arabic": "لِلَّهِ",
+          "french": "(appartiennent) à Allâh,",
+          "sourceRow": 8
+        },
+        {
+          "position": 3,
+          "arabic": "رَبِّ",
+          "french": "(Le) Maître",
+          "sourceRow": 9
+        },
+        {
+          "position": 4,
+          "arabic": "ٱلۡعَٰلَمِينَ",
+          "french": "(de) toutes les générations de chaque créature,",
+          "sourceRow": 10
+        }
+      ]
+    },
+    {
+      "verse": 3,
+      "words": [
+        {
+          "position": 1,
+          "arabic": "ٱلرَّحۡمَٰنِ",
+          "french": "L’Extrêmement Miséricordieux en Son Essence,",
+          "sourceRow": 12
+        },
+        {
+          "position": 2,
+          "arabic": "ٱلرَّحِيمِ",
+          "french": "Le Très Miséricordieux dans Ses Actions,",
+          "sourceRow": 13
+        }
+      ]
+    },
+    {
+      "verse": 4,
+      "words": [
+        {
+          "position": 1,
+          "arabic": "مَٰلِكِ",
+          "french": "(Le) Possesseur",
+          "sourceRow": 15
+        },
+        {
+          "position": 2,
+          "arabic": "يَوۡمِ",
+          "french": "(du) Jour",
+          "sourceRow": 16
+        },
+        {
+          "position": 3,
+          "arabic": "ٱلدِّينِ",
+          "french": "(du) Jugement avec Rétribution.",
+          "sourceRow": 17
+        }
+      ]
+    },
+    {
+      "verse": 5,
+      "words": [
+        {
+          "position": 1,
+          "arabic": "إِيَّاكَ",
+          "french": "Toi (Seul)",
+          "sourceRow": 19
+        },
+        {
+          "position": 2,
+          "arabic": "نَعۡبُدُ",
+          "french": "nous adorons",
+          "sourceRow": 20
+        },
+        {
+          "position": 3,
+          "arabic": "وَإِيَّاكَ",
+          "french": "et (à) Toi (Seul)",
+          "sourceRow": 21
+        },
+        {
+          "position": 4,
+          "arabic": "نَسۡتَعِينُ",
+          "french": "nous demandons de l’aide.",
+          "sourceRow": 22
+        }
+      ]
+    },
+    {
+      "verse": 6,
+      "words": [
+        {
+          "position": 1,
+          "arabic": "ٱهۡدِنَا",
+          "french": "Guide-nous",
+          "sourceRow": 24
+        },
+        {
+          "position": 2,
+          "arabic": "ٱلصِّرَٰطَ",
+          "french": "(sur) le chemin",
+          "sourceRow": 25
+        },
+        {
+          "position": 3,
+          "arabic": "ٱلۡمُسۡتَقِيمَ",
+          "french": "droit,",
+          "sourceRow": 26
+        }
+      ]
+    },
+    {
+      "verse": 7,
+      "words": [
+        {
+          "position": 1,
+          "arabic": "صِرَٰطَ",
+          "french": "(le) chemin",
+          "sourceRow": 28
+        },
+        {
+          "position": 2,
+          "arabic": "ٱلَّذِينَ",
+          "french": "(de) ceux (à) qui",
+          "sourceRow": 29
+        },
+        {
+          "position": 3,
+          "arabic": "أَنۡعَمۡتَ",
+          "french": "Tu as donné des bienfaits",
+          "sourceRow": 30
+        },
+        {
+          "position": 4,
+          "arabic": "عَلَيۡهِمۡ",
+          "french": "à eux,",
+          "sourceRow": 31
+        },
+        {
+          "position": 5,
+          "arabic": "غَيۡرِ",
+          "french": "pas",
+          "sourceRow": 32
+        },
+        {
+          "position": 6,
+          "arabic": "ٱلۡمَغۡضُوبِ",
+          "french": "(de) ceux contre qui il y a de la colère",
+          "sourceRow": 33
+        },
+        {
+          "position": 7,
+          "arabic": "عَلَيۡهِمۡ",
+          "french": "contre eux",
+          "sourceRow": 34
+        },
+        {
+          "position": 8,
+          "arabic": "وَلَا",
+          "french": "et pas (non plus)",
+          "sourceRow": 35
+        },
+        {
+          "position": 9,
+          "arabic": "ٱلضَّآلِّينَ",
+          "french": "(des) égarés.",
+          "sourceRow": 36
+        }
+      ]
+    }
+  ]
+}
