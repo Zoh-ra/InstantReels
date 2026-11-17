@@ -15,6 +15,7 @@ import { cpus, totalmem } from 'node:os';
 import { resolve } from 'node:path';
 import {
   DEFAULT_BOX_STYLE,
+  DEFAULT_FULL_VERSE_STYLE,
   DEFAULT_TITLE,
   DEFAULT_VERSE_DECORATION,
   RenderDocumentSchema,
@@ -80,14 +81,18 @@ async function main(): Promise<void> {
       rmSync(work, { recursive: true, force: true });
       mkdirSync(work, { recursive: true });
       const doc: RenderDocument = RenderDocumentSchema.parse({
-        version: 2,
+        version: 3,
+        mode: 'word_by_word',
+        country: 'FR',
+        maxBoxesPerScene: 5,
+        fullVerseStyle: DEFAULT_FULL_VERSE_STYLE,
         fps: FPS,
         width: preset.width,
         height: preset.height,
         totalFrames,
         surah: fixture.surah,
-        audio: { src: audioPath },
-        background: { kind: 'video', src: bgPath, brightness: -0.04, dimOpacity: 0.35, loop: true },
+        audio: { src: audioPath, durationMs: totalSec * 1000 },
+        background: { kind: 'video', src: bgPath, durationMs: BG_SECONDS * 1000, brightness: -0.04, dimOpacity: 0.35, blur: 0, loop: true },
         branding: defaultBranding('Al-Huda International France', resolve(ROOT, 'assets/branding/qr/fr.jpg')),
         title: DEFAULT_TITLE,
         bismillah: { src: resolve(ROOT, 'assets/branding/bismillah/bismillah.svg'), color: '#f2f6fa', widthRatio: 0.78, centerY: 900, backdrop: null },

@@ -8,9 +8,8 @@ import {
   EDGE_MARGIN,
   FONT_FAMILIES,
   FONT_FILES,
-  IntroSceneLayer,
   SURAH_NAMES_FONT_URL,
-  WordBoxSceneLayer,
+  SceneLayer,
   type FontSources,
 } from '@instantreels/video';
 import { buildLayerDocument } from '@instantreels/video/html';
@@ -74,7 +73,7 @@ export async function launchBrowser(): Promise<Browser> {
   return chromium.launch(channel ? { channel } : {});
 }
 
-const ROLES = ['title', 'word-box', 'arabic', 'french', 'verse-marker', 'verse-number-fr', 'technical-label', 'bismillah', 'qr', 'label'] as const;
+const ROLES = ['title', 'word-box', 'verse-panel', 'arabic', 'french', 'translation', 'verse-marker', 'verse-number-fr', 'technical-label', 'bismillah', 'qr', 'label'] as const;
 
 async function collectRects(page: Page): Promise<Rect[]> {
   return page.evaluate((roles: readonly string[]) => {
@@ -119,11 +118,11 @@ export async function renderStills(doc: RenderDocument, opts: { fontsDir: string
       const missing = Object.values(FONT_FAMILIES).filter((f) => !loaded.includes(f));
       if (missing.length) throw new Error(`${name}: fonts not loaded: ${missing.join(', ')}`);
       const overflow = await page.evaluate(() =>
-        Array.from(document.querySelectorAll<HTMLElement>('[data-role="word-box"]'))
+        Array.from(document.querySelectorAll<HTMLElement>('[data-role="word-box"], [data-role="verse-panel"]'))
           .filter((el) => el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1)
           .map((el) => el.textContent ?? ''),
       );
-      if (overflow.length) throw new Error(`${name}: text overflows its box: ${overflow.join(' | ')}`);
+      if (overflow.length) throw new Error(`${name}: text does not fit — reduce the text size or split the scene (${overflow.map((t) => t.slice(0, 40)).join(' | ')})`);
       const rects = await collectRects(page);
       const png = resolve(opts.outDir, `${name}.png`);
       await page.screenshot({ path: png, omitBackground: true, type: 'png' });
@@ -144,15 +143,17 @@ export async function renderStills(doc: RenderDocument, opts: { fontsDir: string
     const scenePngs: string[] = [];
     for (const [i, scene] of doc.scenes.entries()) {
       const name = `scene-${String(i + 1).padStart(3, '0')}`;
-      const shot =
-        scene.kind === 'intro_bismillah'
-          ? await shoot(IntroSceneLayer({ surah: doc.surah, bismillah: doc.bismillah, bismillahSvg, title: doc.title, scale, width, height }), name)
-          : await shoot(WordBoxSceneLayer({ scene, style: doc.boxStyle, decoration: doc.verseDecoration, title: doc.title, showTechnicalLabels: doc.showTechnicalLabels, scale, width, height }), name);
+      const shot = await shoot(SceneLayer({ doc, scene, bismillahSvg, scale, width, height }), name);
       scenePngs.push(shot.png);
-      const label = scene.kind === 'intro_bismillah' ? `${name} (Bismillah intro)` : `${name} (${scene.ref.surah}:${scene.ref.verse} w${scene.ref.fromPosition}-${scene.ref.toPosition})`;
+      const label =
+        scene.kind === 'intro_bismillah'
+          ? `${name} (Bismillah intro)`
+          : scene.kind === 'word_boxes'
+            ? `${name} (${scene.ref.surah}:${scene.ref.verse} w${scene.ref.fromPosition}-${scene.ref.toPosition})`
+            : `${name} (${scene.items.map((it) => `${it.surah}:${it.verse} w${it.fromPosition}-${it.toPosition}`).join(', ')})`;
 
       // no overlap between scene content and the footer / title, everything inside the edge margin
-      const blocks = shot.rects.filter((r) => ['title', 'word-box', 'bismillah', 'technical-label'].includes(r.role));
+      const blocks = shot.rects.filter((r) => ['title', 'word-box', 'verse-panel', 'bismillah'].includes(r.role));
       const all = [...blocks, ...footer.rects.filter((r) => r.role === 'qr' || r.role === 'label')];
       const clashes: string[] = [];
       for (let a = 0; a < all.length; a++) for (let b = a + 1; b < all.length; b++) {
@@ -168,6 +169,16 @@ export async function renderStills(doc: RenderDocument, opts: { fontsDir: string
       if (doc.title.enabled && (scene.kind === 'intro_bismillah' ? doc.title.showOnIntro : doc.title.showOnScenes)) {
         const t = shot.rects.find((r) => r.role === 'title');
         add(`${label}: Surah title present at top`, !!t && t.w > 50 * scale && t.y < 400 * scale, t ? `title box ${Math.round(t.w)}×${Math.round(t.h)} at y=${Math.round(t.y)}` : 'missing');
+      }
+      if (scene.kind === 'full_verse') {
+        const markers = shot.rects.filter((r) => r.role === 'verse-marker').map((r) => r.text);
+        const numbers = shot.rects.filter((r) => r.role === 'verse-number-fr').map((r) => r.text);
+        const expAr = scene.items.filter((it) => sceneEndsVerse(it.toPosition, it.verseWordCount) && doc.verseDecoration.arabicMarker.enabled).map((it) => toArabicIndicDigits(it.verse));
+        const expFr = doc.verseDecoration.frenchNumber.enabled ? scene.items.map((it) => String(it.verse)) : [];
+        const texts = shot.rects.filter((r) => r.role === 'translation').map((r) => r.text);
+        add(`${label}: verse markers/numbers and complete translations`,
+          JSON.stringify(markers) === JSON.stringify(expAr) && JSON.stringify(numbers) === JSON.stringify(expFr) && texts.length === scene.items.length && texts.every((t, k) => t === scene.items[k]!.translation),
+          `markers ${markers.join(',') || '—'}; numbers ${numbers.join(',') || '—'}`);
       }
       if (scene.kind === 'word_boxes') {
         const ends = sceneEndsVerse(scene.ref.toPosition, scene.ref.verseWordCount);
@@ -185,7 +196,7 @@ export async function renderStills(doc: RenderDocument, opts: { fontsDir: string
         const placed = markers.every((mk) => !!lastArabic && !!lastBox && overlaps(mk, lastBox) && mk.x + mk.w <= lastArabic.x + 1);
         add(`${label}: verse-end marker ${ends ? `${toArabicIndicDigits(scene.ref.verse)} + FR ${scene.ref.verse} on last word` : 'absent (verse continues)'}`, arOk && frOk && placed,
           `markers ${markers.map((r) => r.text).join(',') || '—'}; FR numbers ${numbers.map((r) => r.text).join(',') || '—'}`);
-      } else {
+      } else if (scene.kind === 'intro_bismillah') {
         const b = shot.rects.find((r) => r.role === 'bismillah');
         add(`${label}: calligraphy present`, !!b && Math.abs(b.w - width * doc.bismillah.widthRatio) <= 2, b ? `${Math.round(b.w)}×${Math.round(b.h)} px` : 'missing');
       }

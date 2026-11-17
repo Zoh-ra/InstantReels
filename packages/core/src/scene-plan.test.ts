@@ -4,9 +4,9 @@ import { resolve } from 'node:path';
 import { describe, it } from 'node:test';
 import type { WordByWordSurahFixture, WordByWordVerse } from './content.ts';
 import { bismillahIntroPolicy, sceneEndsVerse, surahNameCode, toArabicIndicDigits } from './quran-rules.ts';
-import { RenderDocumentSchema, DEFAULT_BOX_STYLE, DEFAULT_TITLE, DEFAULT_VERSE_DECORATION, defaultBranding } from './render-document.ts';
-import { applyTiming, planScenes, resolveBismillahIntro, type SceneDraft } from './scene-plan.ts';
-import { suggestEvenBoundaries } from './timeline.ts';
+import { RenderDocumentSchema, DEFAULT_BOX_STYLE, DEFAULT_FULL_VERSE_STYLE, DEFAULT_TITLE, DEFAULT_VERSE_DECORATION, defaultBranding } from './render-document.ts';
+import { applyTiming, planFullVerseScenes, planScenes, resolveBismillahIntro, retime, type SceneDraft } from './scene-plan.ts';
+import { suggestEvenBoundaries, validateTimeline } from './timeline.ts';
 
 const ROOT = resolve(import.meta.dirname, '../../..');
 const fatihah = JSON.parse(readFileSync(resolve(ROOT, 'fixtures/quran/surah-001.wbw.json'), 'utf8')) as WordByWordSurahFixture;
@@ -82,7 +82,11 @@ describe('planScenes — At-Tawbah rule (synthetic tokens)', () => {
 
 describe('RenderDocumentSchema invariants', () => {
   const base = (surah: number, drafts: SceneDraft[]) => ({
-    version: 2,
+    version: 3,
+    mode: 'word_by_word',
+    country: 'FR',
+    maxBoxesPerScene: 5,
+    fullVerseStyle: DEFAULT_FULL_VERSE_STYLE,
     fps: 30,
     width: 1080,
     height: 1920,
@@ -118,5 +122,36 @@ describe('RenderDocumentSchema invariants', () => {
       second.words.unshift({ position: 5, arabic: 'dup', french: 'dup' });
     }
     assert.equal(RenderDocumentSchema.safeParse(base(1, broken)).success, false);
+  });
+});
+
+describe('Mode B — full verse planning (synthetic tokens)', () => {
+  const fv = (verse: number, n: number) => ({ verse, words: Array.from({ length: n }, (_, i) => ({ position: i + 1, arabic: `w${verse}-${i + 1}` })), translation: `translation of ${verse}` });
+  it('one scene per verse, long verses split into balanced segments, never truncated', () => {
+    const d = planFullVerseScenes({ surah: 2, verses: [fv(1, 1), fv(282, 128)] });
+    assert.equal(d[0]?.kind, 'intro_bismillah');
+    const segs = d.filter((s) => s.kind === 'full_verse').flatMap((s) => (s.kind === 'full_verse' ? s.items : []));
+    const v282 = segs.filter((it) => it.verse === 282);
+    assert.equal(v282.length, 6);
+    assert.equal(v282.reduce((n, it) => n + it.toPosition - it.fromPosition + 1, 0), 128);
+    assert.equal(v282.map((it) => it.arabic).join(' '), fv(282, 128).words.map((w) => w.arabic).join(' '));
+    assert.ok(v282.every((it) => it.translation === 'translation of 282'));
+    assert.deepEqual(v282.map((it) => sceneEndsVerse(it.toPosition, it.verseWordCount)), [false, false, false, false, false, true]);
+  });
+});
+
+describe('retime — keeps the user timing when pagination changes', () => {
+  it('re-paginating 1:7 from 5+4 to 3+2+4 keeps all other boundaries and the total', () => {
+    const drafts = planScenes({ surah: 1, verses: fatihah.verses });
+    const spans = suggestEvenBoundaries(870, drafts.length);
+    const old = applyTiming(drafts, spans);
+    const next = retime(old, planScenes({ surah: 1, verses: fatihah.verses, layouts: new Map([[7, [3, 2, 4]]]) }), 870);
+    assert.equal(next.length, old.length + 1);
+    assert.equal(next[next.length - 1]!.endFrame, 870);
+    for (let i = 0; i < old.length - 2; i++) assert.deepEqual([next[i]!.startFrame, next[i]!.endFrame], [old[i]!.startFrame, old[i]!.endFrame]);
+    const v7old = old.filter((s) => s.kind === 'word_boxes' && s.ref.verse === 7);
+    const v7new = next.filter((s) => s.kind === 'word_boxes' && s.ref.verse === 7);
+    assert.equal(v7new[0]!.startFrame, v7old[0]!.startFrame);
+    assert.deepEqual(validateTimeline(next, 870), []);
   });
 });

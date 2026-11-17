@@ -13,9 +13,12 @@ export interface RunResult {
 }
 
 /** Runs a binary without a shell (no injection), rejects with the stderr tail on failure. */
-export function run(bin: string, args: readonly string[], opts: { onStderr?: (chunk: string) => void } = {}): Promise<RunResult> {
+export function run(bin: string, args: readonly string[], opts: { onStderr?: (chunk: string) => void; signal?: AbortSignal } = {}): Promise<RunResult> {
   return new Promise((resolvePromise, reject) => {
+    if (opts.signal?.aborted) return reject(new Error('cancelled'));
     const child = spawn(bin, args, { windowsHide: true });
+    const onAbort = () => child.kill('SIGKILL');
+    opts.signal?.addEventListener('abort', onAbort, { once: true });
     let stdout = '';
     let stderr = '';
     child.stdout.on('data', (d: Buffer) => (stdout += d.toString('utf8')));
@@ -47,7 +50,7 @@ ${stderr.slice(-2000)}`))));
   });
 }
 
-export const ffmpeg = (args: readonly string[], opts?: { onStderr?: (chunk: string) => void }) =>
+export const ffmpeg = (args: readonly string[], opts?: { onStderr?: (chunk: string) => void; signal?: AbortSignal }) =>
   run(ffmpegBin(), ['-hide_banner', '-nostdin', '-y', ...args], opts);
 
 export interface ProbeStream {

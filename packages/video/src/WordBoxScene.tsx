@@ -37,13 +37,13 @@ export function WordBoxSceneLayer({ scene, style, decoration, title, showTechnic
   const grid: CSSProperties = { direction: 'rtl', display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignContent: 'center', gap: u(style.gap), width: '100%' };
   const box: CSSProperties = {
     boxSizing: 'border-box',
-    width: `calc((100% - ${u(style.gap)}) / 2)`,
-    minHeight: u(236),
+    width: `calc((100% - ${u(style.gap * (style.columns - 1))}) / ${style.columns})`,
+    minHeight: u(style.minHeight),
     padding: u(style.padding),
     borderRadius: u(style.radius),
-    border: `${u(style.borderWidth)} solid ${style.borderColor}`,
+    border: `${u(style.borderWidth)} ${style.borderStyle} ${style.borderColor}`,
     background: style.background,
-    boxShadow: `0 0 ${u(22)} ${withAlpha(style.glowColor, 0.45)}, inset 0 0 ${u(18)} ${withAlpha(style.glowColor, 0.18)}`,
+    boxShadow: style.glowStrength > 0 ? `0 0 ${u(22)} ${withAlpha(style.glowColor, style.glowStrength)}, inset 0 0 ${u(18)} ${withAlpha(style.glowColor, style.glowStrength * 0.4)}` : 'none',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',

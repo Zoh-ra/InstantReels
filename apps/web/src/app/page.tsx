@@ -7,9 +7,9 @@ import { readPublicEnv } from '@/lib/env';
 export const dynamic = 'force-dynamic';
 
 const MODES = [
-  { title: 'Mot à mot', desc: 'Cadres arabe + traduction française du classeur du Dr Usama Nonnenmacher, pagination automatique.', Icon: Captions, color: 'border-aurora-mint/70 text-aurora-mint', status: 'Aperçu disponible' },
-  { title: 'Versets complets', desc: 'Verset entier avec traduction Hamidullah, Hilali & Khan ou Bernström selon le pays.', Icon: BookOpenText, color: 'border-plasma-blue/70 text-plasma-blue', status: 'Phase 3' },
-  { title: 'Export MP4', desc: 'H.264 / AAC en 1080×1920 ou 2160×3840, rendu sur le serveur, validé image par image.', Icon: Film, color: 'border-amber/70 text-amber', status: 'Moteur validé · file d’attente en phase 5' },
+  { title: 'Mot à mot', desc: 'Cadres arabe + traduction française du classeur du Dr Usama Nonnenmacher, pagination automatique.', Icon: Captions, color: 'border-aurora-mint/70 text-aurora-mint', status: 'Disponible' },
+  { title: 'Versets complets', desc: 'Verset entier avec traduction Hamidullah, Hilali & Khan ou Bernström selon le pays.', Icon: BookOpenText, color: 'border-plasma-blue/70 text-plasma-blue', status: 'Disponible' },
+  { title: 'Export MP4', desc: 'H.264 / AAC en 1080×1920 ou 2160×3840, rendu sur le serveur, validé image par image.', Icon: Film, color: 'border-amber/70 text-amber', status: 'Disponible' },
 ];
 
 export default function StudioPage() {
@@ -34,8 +34,8 @@ export default function StudioPage() {
             <Button asChild size="lg" className="gap-2">
               <Link href="/editor/demo">Ouvrir la démo Al-Fâtiha <ArrowRight /></Link>
             </Button>
-            <Button size="lg" variant="outline" disabled className="gap-2" title="Création de projets : phase 2 (base de données)">
-              <Plus /> Nouveau projet
+            <Button asChild size="lg" variant="outline" className="gap-2">
+              <Link href="/projects"><Plus /> Mes projets</Link>
             </Button>
           </div>
         </section>
@@ -67,16 +67,14 @@ export default function StudioPage() {
               <div className="mt-4 flex items-center justify-between">
                 <div>
                   <p className="text-lunar-white">Démo — Al-Fâtiha</p>
-                  <p className="text-xs text-steel">Mot à mot · 9 scènes · 29 s</p>
+                  <p className="text-xs text-steel">Démo sans compte · mot à mot · 29 s</p>
                 </div>
                 <ArrowRight className="size-4 text-steel transition-transform group-hover:translate-x-1" aria-hidden />
               </div>
             </Link>
-            <div className="flex flex-col justify-center rounded-2xl border border-dashed border-hairline p-5 text-sm text-steel">
-              {supabase.ok
-                ? 'Supabase est configuré. La sauvegarde des projets arrive avec la phase 2 (schéma, RLS, import du classeur).'
-                : 'Renseignez vos clés Supabase dans .env.local (voir README) : la sauvegarde des projets arrive avec la phase 2.'}
-            </div>
+            <Link href="/projects" className="flex flex-col justify-center rounded-2xl border border-dashed border-hairline p-5 text-sm text-steel transition-colors hover:border-gunmetal hover:text-lunar-white">
+              {supabase.ok ? 'Connectez-vous pour créer, enregistrer et exporter vos projets →' : 'Renseignez vos clés Supabase dans .env.local (voir README) pour activer les projets.'}
+            </Link>
           </div>
         </section>
       </main>

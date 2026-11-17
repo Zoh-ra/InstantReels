@@ -28,7 +28,8 @@
     "import:workbook": "tsx packages/importer/src/cli/import-workbook.ts",
     "import:tanzil": "tsx packages/importer/src/cli/import-tanzil.ts",
     "db:test-import": "tsx scripts/db/test-import.ts",
-    "db:migrate": "tsx scripts/db/migrate.ts"
+    "db:migrate": "tsx scripts/db/migrate.ts",
+    "worker": "tsx apps/worker/src/service/worker.ts"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.16",

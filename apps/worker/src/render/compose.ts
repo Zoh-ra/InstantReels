@@ -13,7 +13,8 @@ export interface EncodePreset {
 }
 
 export const PRESETS: Record<EncodePreset['name'], EncodePreset> = {
-  '2160p30': { name: '2160p30', width: 2160, height: 3840, level: '5.1', crf: 18, maxrate: '45M', bufsize: '90M', x264Preset: 'medium' },
+  // 4K: capped at 24 Mb/s so a 60 s reel stays ≈ 180 MB max (Supabase Storage upload limits)
+  '2160p30': { name: '2160p30', width: 2160, height: 3840, level: '5.1', crf: 18, maxrate: '24M', bufsize: '48M', x264Preset: 'medium' },
   '1080p30': { name: '1080p30', width: 1080, height: 1920, level: '4.1', crf: 19, maxrate: '12M', bufsize: '24M', x264Preset: 'medium' },
 };
 
@@ -40,7 +41,7 @@ export function buildComposeArgs(doc: RenderDocument, stills: { persistentPng: s
     const bg = doc.background;
     filters.push(
       `[0:v]fps=${fps},scale=${W}:${H}:force_original_aspect_ratio=increase:flags=lanczos,crop=${W}:${H},setsar=1,` +
-        `eq=brightness=${bg.brightness.toFixed(3)},drawbox=x=0:y=0:w=iw:h=ih:color=black@${bg.dimOpacity.toFixed(3)}:t=fill,` +
+        `eq=brightness=${bg.brightness.toFixed(3)},${bg.blur > 0 ? `boxblur=${Math.max(1, Math.round((bg.blur * W) / 1080))}:1,` : ''}drawbox=x=0:y=0:w=iw:h=ih:color=black@${bg.dimOpacity.toFixed(3)}:t=fill,` +
         `trim=end_frame=${totalFrames},setpts=PTS-STARTPTS,format=gbrp[bg]`,
     );
   } else {
@@ -89,9 +90,10 @@ export function buildComposeArgs(doc: RenderDocument, stills: { persistentPng: s
   return args;
 }
 
-export async function compose(doc: RenderDocument, stills: { persistentPng: string; scenePngs: string[] }, preset: EncodePreset, outPath: string, onProgress?: (frame: number) => void): Promise<number> {
+export async function compose(doc: RenderDocument, stills: { persistentPng: string; scenePngs: string[] }, preset: EncodePreset, outPath: string, onProgress?: (frame: number) => void, signal?: AbortSignal): Promise<number> {
   const t0 = performance.now();
   await ffmpeg(buildComposeArgs(doc, stills, preset, outPath), {
+    ...(signal ? { signal } : {}),
     onStderr: (s) => {
       const m = /frame=\s*(\d+)/.exec(s);
       if (m && onProgress) onProgress(Number(m[1]));
