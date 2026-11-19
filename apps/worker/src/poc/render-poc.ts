@@ -118,7 +118,7 @@ async function main(): Promise<void> {
       console.log(`[${preset.name}] encoded in ${(encodeMs / 1000).toFixed(1)} s → ${mp4}`);
 
       const checks: Check[] = [
-        ...stills.layoutChecks,
+        ...stills.layoutChecks.map((c) => ({ ...c, critical: true })),
         ...(await validateOutput(mp4, {
           doc,
           width: preset.width,

@@ -11,8 +11,9 @@ import type { EditorAction } from './editor-state';
 
 const AUDIO_TYPES = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/x-wav', 'audio/wave', 'audio/mp4', 'audio/x-m4a', 'audio/aac'];
 const VIDEO_TYPES = ['video/mp4', 'video/quicktime', 'video/webm'];
-const MAX_AUDIO = 100 * 1024 * 1024;
-const MAX_VIDEO = 500 * 1024 * 1024;
+/** Supabase Storage refuses any object above the project limit (free plan: 50 MB). */
+const LIMIT_MB = Number(process.env.NEXT_PUBLIC_STORAGE_MAX_UPLOAD_MB || 50);
+const MAX_BYTES = LIMIT_MB * 1024 * 1024;
 
 type Library = { id: string; uri: string; name: string; durationMs: number | null; width?: number | null; height?: number | null }[];
 
@@ -62,7 +63,12 @@ export function MediaPanel({ doc, dispatch, projectId, enabled }: { doc: RenderD
     setError(null);
     const types = kind === 'audio' ? AUDIO_TYPES : VIDEO_TYPES;
     if (!types.includes(file.type)) return setError(kind === 'audio' ? 'Formats acceptés : MP3, WAV, M4A, AAC.' : 'Formats acceptés : MP4, MOV, WebM.');
-    if (file.size > (kind === 'audio' ? MAX_AUDIO : MAX_VIDEO)) return setError(`Fichier trop volumineux (max ${kind === 'audio' ? 100 : 500} Mo).`);
+    if (file.size > MAX_BYTES) {
+      return setError(
+        `« ${file.name} » fait ${(file.size / 2 ** 20).toFixed(1)} Mo : la limite de votre stockage Supabase est de ${LIMIT_MB} Mo par fichier. ` +
+          (kind === 'audio' ? 'Exportez la récitation en MP3 (128–192 kb/s) pour réduire sa taille.' : 'Compressez la vidéo (par exemple en 1080×1920, H.264, 8 Mb/s) ou utilisez un extrait plus court : elle boucle automatiquement.'),
+      );
+    }
     const sb = createSupabaseBrowserClient();
     if (!sb) return setError('Supabase n’est pas configuré.');
     setBusy(kind);
@@ -76,7 +82,7 @@ export function MediaPanel({ doc, dispatch, projectId, enabled }: { doc: RenderD
       const path = `${uid}/${crypto.randomUUID()}.${ext}`;
       const bucket = kind === 'audio' ? 'audio' : 'backgrounds';
       const { error: upErr } = await sb.storage.from(bucket).upload(path, file, { contentType: file.type, upsert: false });
-      if (upErr) throw new Error(/size|large|413/i.test(upErr.message) ? 'Fichier refusé par Supabase (taille maximale du projet dépassée).' : upErr.message);
+      if (upErr) throw new Error(/size|large|413/i.test(upErr.message) ? `Fichier refusé par Supabase : il dépasse la limite de ${LIMIT_MB} Mo par fichier.` : /mime|type/i.test(upErr.message) ? 'Format de fichier refusé par le stockage.' : `Échec de l’envoi du fichier (${upErr.message}).`);
       const res = await registerMedia({ kind: kind === 'audio' ? 'audio' : 'background', path, originalName: file.name, mime: file.type, sizeBytes: file.size, durationMs: meta.durationMs, width: meta.width, height: meta.height, projectId });
       if (!res.ok) throw new Error(res.error);
       if (kind === 'audio') dispatch({ type: 'audio', audio: { src: res.data.uri, durationMs: meta.durationMs } });
@@ -99,7 +105,7 @@ export function MediaPanel({ doc, dispatch, projectId, enabled }: { doc: RenderD
           <>
             <input ref={audioInput} type="file" accept={AUDIO_TYPES.join(',')} className="sr-only" onChange={(e) => e.target.files?.[0] && upload(e.target.files[0], 'audio')} />
             <Button variant="outline" className="w-full gap-2" disabled={busy !== null} onClick={() => audioInput.current?.click()}>
-              {busy === 'audio' ? <Loader2 className="animate-spin" /> : <Upload />} Importer une récitation (MP3, WAV, M4A)
+              {busy === 'audio' ? <Loader2 className="animate-spin" /> : <Upload />} Importer une récitation (MP3, WAV, M4A · max {LIMIT_MB} Mo)
             </Button>
             {doc.audio && (
               <div className="flex items-center justify-between rounded-xl border border-hairline p-3 text-sm">
@@ -137,7 +143,7 @@ export function MediaPanel({ doc, dispatch, projectId, enabled }: { doc: RenderD
           <>
             <input ref={videoInput} type="file" accept={VIDEO_TYPES.join(',')} className="sr-only" onChange={(e) => e.target.files?.[0] && upload(e.target.files[0], 'video')} />
             <Button variant="outline" className="w-full gap-2" disabled={busy !== null} onClick={() => videoInput.current?.click()}>
-              {busy === 'video' ? <Loader2 className="animate-spin" /> : <Video />} Importer une vidéo d’arrière-plan
+              {busy === 'video' ? <Loader2 className="animate-spin" /> : <Video />} Importer une vidéo d’arrière-plan (max {LIMIT_MB} Mo)
             </Button>
           </>
         )}

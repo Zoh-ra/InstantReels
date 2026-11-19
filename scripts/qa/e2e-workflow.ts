@@ -8,7 +8,7 @@
  * Never prints credentials. Usage: npx tsx scripts/qa/e2e-workflow.ts [baseUrl] [--skip-4k]
  */
 import { spawn } from 'node:child_process';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createClient } from '@supabase/supabase-js';
 import { chromium, type Page } from 'playwright-core';
@@ -47,6 +47,7 @@ async function cleanup(uid: string) {
   await admin.from('projects').delete().eq('owner_id', uid);
   await admin.from('audio_assets').delete().eq('owner_id', uid);
   await admin.from('background_media').delete().eq('owner_id', uid);
+  rmSync(resolve(ROOT, process.env.EXPORTS_DIR?.trim() || 'output/exports', uid), { recursive: true, force: true }); // locally delivered exports
   for (const bucket of ['audio', 'backgrounds', 'exports']) {
     const { data } = await admin.storage.from(bucket).list(uid, { limit: 1000 });
     if (data?.length) await admin.storage.from(bucket).remove(data.map((f) => `${uid}/${f.name}`));

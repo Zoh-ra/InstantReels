@@ -197,9 +197,9 @@ export function BrandPanel({ doc, dispatch }: PanelProps) {
         <SwitchField id="title-on" label="Afficher la calligraphie" checked={t.enabled} onChange={(v) => dispatch({ type: 'title', patch: { enabled: v } })} />
         <SwitchField id="title-word" label="Préfixe « سورة »" checked={t.withSurahWord} onChange={(v) => dispatch({ type: 'title', patch: { withSurahWord: v } })} />
         <SwitchField id="title-scenes" label="Visible sur toutes les scènes" checked={t.showOnScenes} onChange={(v) => dispatch({ type: 'title', patch: { showOnScenes: v } })} />
-        <ColorField id="title-color" label="Couleur" value={t.color} onChange={(v) => dispatch({ type: 'title', patch: { color: v } })} />
-        <SliderField id="title-size" label="Taille" value={t.size} min={70} max={170} onChange={(v) => dispatch({ type: 'title', patch: { size: v } })} />
-        <SliderField id="title-top" label="Position verticale" value={t.top} min={60} max={240} onChange={(v) => dispatch({ type: 'title', patch: { top: v } })} />
+        <ColorField id="title-color" label="Couleur du titre" value={t.color} onChange={(v) => dispatch({ type: 'title', patch: { color: v } })} />
+        <SliderField id="title-size" label="Taille du titre" value={t.size} min={70} max={170} onChange={(v) => dispatch({ type: 'title', patch: { size: v } })} />
+        <SliderField id="title-top" label="Position verticale du titre" value={t.top} min={60} max={240} onChange={(v) => dispatch({ type: 'title', patch: { top: v } })} />
         <div className="flex min-h-11 items-center justify-between">
           <Label className="text-sm text-steel">Alignement</Label>
           <div className="flex gap-1">
@@ -219,25 +219,26 @@ export function BrandPanel({ doc, dispatch }: PanelProps) {
         />
         {hasIntro && (
           <>
-            <ColorField id="bsm-color" label="Couleur" value={doc.bismillah.color} onChange={(v) => dispatch({ type: 'bismillah', patch: { color: v } })} />
-            <SliderField id="bsm-width" label="Largeur" value={doc.bismillah.widthRatio} min={0.4} max={0.92} step={0.01} unit="" onChange={(v) => dispatch({ type: 'bismillah', patch: { widthRatio: v } })} />
-            <SliderField id="bsm-y" label="Position verticale" value={doc.bismillah.centerY} min={500} max={1300} onChange={(v) => dispatch({ type: 'bismillah', patch: { centerY: v } })} />
-            <SwitchField id="bsm-backdrop" label="Panneau derrière la calligraphie" checked={doc.bismillah.backdrop !== null} onChange={(v) => dispatch({ type: 'bismillah', patch: { backdrop: v ? '#0c0f19b3' : null } })} />
+            <ColorField id="bsm-color" label="Couleur de la calligraphie" value={doc.bismillah.color} onChange={(v) => dispatch({ type: 'bismillah', patch: { color: v } })} />
+            <SliderField id="bsm-width" label="Largeur de la calligraphie" value={doc.bismillah.widthRatio} min={0.4} max={doc.bismillah.backdrop ? 0.84 : 0.92} step={0.01} unit="" onChange={(v) => dispatch({ type: 'bismillah', patch: { widthRatio: v } })} />
+            <SliderField id="bsm-y" label="Position verticale de la calligraphie" value={doc.bismillah.centerY} min={500} max={1300} onChange={(v) => dispatch({ type: 'bismillah', patch: { centerY: v } })} />
+            <SwitchField id="bsm-backdrop" label="Panneau derrière la calligraphie" checked={doc.bismillah.backdrop !== null} onChange={(v) => dispatch({ type: 'bismillah', patch: { backdrop: v ? '#0c0f19b3' : null, widthRatio: v ? Math.min(0.84, doc.bismillah.widthRatio) : doc.bismillah.widthRatio } })} />
             <p className="text-xs text-steel">Durée : déplacez la limite de la scène « Bismillah » dans la chronologie.</p>
           </>
         )}
       </Section>
       <Section eyebrow="Pied de page" title="Marque et QR code">
         <SwitchField id="label-on" label="Libellé institutionnel" checked={br.labelVisible} onChange={(v) => dispatch({ type: 'branding', patch: { labelVisible: v } })} />
-        <ColorField id="label-color" label="Couleur" value={br.labelColor} onChange={(v) => dispatch({ type: 'branding', patch: { labelColor: v } })} />
-        <SliderField id="label-size" label="Taille" value={br.labelSize} min={22} max={52} onChange={(v) => dispatch({ type: 'branding', patch: { labelSize: v } })} />
-        <SliderField id="label-bottom" label="Distance au bas" value={br.labelBottom} min={40} max={260} onChange={(v) => dispatch({ type: 'branding', patch: { labelBottom: v } })} />
+        <ColorField id="label-color" label="Couleur du libellé" value={br.labelColor} onChange={(v) => dispatch({ type: 'branding', patch: { labelColor: v } })} />
+        <SliderField id="label-size" label="Taille du libellé" value={br.labelSize} min={22} max={52} onChange={(v) => dispatch({ type: 'branding', patch: { labelSize: v } })} />
+        <SliderField id="label-bottom" label="Distance du libellé au bas" value={br.labelBottom} min={40} max={260} onChange={(v) => dispatch({ type: 'branding', patch: { labelBottom: v } })} />
         {br.qr ? (
           <>
             <SwitchField id="qr-on" label="QR code" checked={br.qr.visible} onChange={(v) => dispatch({ type: 'qr', patch: { visible: v } })} />
-            <SliderField id="qr-size" label="Taille du QR" value={br.qr.size} min={120} max={240} onChange={(v) => dispatch({ type: 'qr', patch: { size: v } })} />
-            <SliderField id="qr-x" label="Position horizontale" value={br.qr.centerX} min={120} max={960} onChange={(v) => dispatch({ type: 'qr', patch: { centerX: v } })} />
-            <SliderField id="qr-bottom" label="Distance au bas" value={br.qr.bottom} min={100} max={420} onChange={(v) => dispatch({ type: 'qr', patch: { bottom: v } })} />
+            <SliderField id="qr-size" label="Taille du QR" value={br.qr.size} min={120} max={240} onChange={(v) => { const half = v / 2 + 40; dispatch({ type: 'qr', patch: { size: v, centerX: Math.min(1080 - half, Math.max(half, br.qr!.centerX)) } }); }} />
+            {/* keep the whole code (incl. its white frame) inside the 40 px safety margin */}
+            <SliderField id="qr-x" label="Position horizontale du QR" value={br.qr.centerX} min={Math.ceil(br.qr.size / 2 + 40)} max={Math.floor(1080 - br.qr.size / 2 - 40)} onChange={(v) => dispatch({ type: 'qr', patch: { centerX: v } })} />
+            <SliderField id="qr-bottom" label="Distance du QR au bas" value={br.qr.bottom} min={100} max={420} onChange={(v) => dispatch({ type: 'qr', patch: { bottom: v } })} />
           </>
         ) : (
           <p className="text-xs text-steel">Aucun QR code fourni pour ce pays (UK/SE : en attente des fichiers officiels).</p>

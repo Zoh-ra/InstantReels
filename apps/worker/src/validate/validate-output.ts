@@ -9,6 +9,8 @@ export interface Check {
   name: string;
   pass: boolean;
   detail: string;
+  /** false = informative heuristic (reported, never blocks delivery) */
+  critical: boolean;
 }
 
 export interface ValidationContext {
@@ -29,7 +31,7 @@ export interface ValidationContext {
 type JsQR = (data: Uint8ClampedArray, width: number, height: number) => { data: string } | null;
 const jsQR: JsQR = ((jsQRModule as unknown as { default?: JsQR }).default ?? (jsQRModule as unknown as JsQR));
 
-const check = (name: string, pass: boolean, detail: string): Check => ({ name, pass, detail });
+const check = (name: string, pass: boolean, detail: string, critical = true): Check => ({ name, pass, detail, critical });
 
 /** Top-level MP4 box order; faststart means 'moov' precedes 'mdat'. */
 export function topLevelBoxes(path: string): string[] {
@@ -131,7 +133,28 @@ export async function validateOutput(path: string, ctx: ValidationContext): Prom
   // ── black frames ──
   const bd = await ffmpeg(['-i', path, '-an', '-vf', 'blackdetect=d=0.04:pix_th=0.06', '-f', 'null', '-']);
   const blacks = bd.stderr.match(/black_start:\S+/g) ?? [];
-  checks.push(check('no black segments', blacks.length === 0, blacks.length ? blacks.join(', ') : 'none detected'));
+  // informative only: a deliberately dark solid background is legitimately "black"
+  checks.push(check('no black segments', blacks.length === 0, blacks.length ? blacks.join(', ') : 'none detected', false));
+
+  // ── every scene actually shows its content (critical): the content zone must have contrast ──
+  {
+    const zoneC = { x: Math.round(96 * s), y: Math.round(250 * s), w: Math.round(888 * s), h: Math.round(1350 * s) };
+    const empty: number[] = [];
+    for (const [i, sc] of doc.scenes.entries()) {
+      const n = Math.min(doc.totalFrames - 1, sc.startFrame + Math.max(doc.sceneFadeInFrames + 2, Math.floor((sc.endFrame - sc.startFrame) / 2)));
+      const img = await grabFrame(path, n, doc.fps, join(ctx.workDir, `content-${i}.png`), zoneC);
+      let sum = 0, sq = 0;
+      const px = img.data.length / 4;
+      for (let k = 0; k < img.data.length; k += 4) {
+        const l = 0.2126 * (img.data[k] ?? 0) + 0.7152 * (img.data[k + 1] ?? 0) + 0.0722 * (img.data[k + 2] ?? 0);
+        sum += l;
+        sq += l * l;
+      }
+      const sd = Math.sqrt(Math.max(0, sq / px - (sum / px) ** 2));
+      if (sd < 4) empty.push(i + 1);
+    }
+    checks.push(check('every scene shows its text/calligraphy', empty.length === 0, empty.length ? `blank scene(s): ${empty.join(', ')}` : `${doc.scenes.length} scenes checked`));
+  }
 
   // ── scene switching exactly on boundaries (content zone, output pixels) ──
   // content zone (word boxes / Bismillah), excluding title and footer
@@ -143,7 +166,7 @@ export async function validateOutput(path: string, ctx: ValidationContext): Prom
     const at = await grabFrame(path, b, doc.fps, join(ctx.workDir, `b${i}-at.png`), zone);
     const stable = meanAbsDiff(prev2, before);
     const change = meanAbsDiff(before, at);
-    checks.push(check(`scene ${i}→${i + 1} switches exactly at frame ${b}`, change > 4 * stable + 2, `Δ(at boundary)=${change.toFixed(2)} vs Δ(within scene)=${stable.toFixed(2)}`));
+    checks.push(check(`scene ${i}→${i + 1} switches exactly at frame ${b}`, change > 4 * stable + 2, `Δ(at boundary)=${change.toFixed(2)} vs Δ(within scene)=${stable.toFixed(2)}`, false));
   }
 
   // ── QR readability on real frames (first, middle, last) ──

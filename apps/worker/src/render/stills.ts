@@ -73,7 +73,7 @@ export async function launchBrowser(): Promise<Browser> {
   return chromium.launch(channel ? { channel } : {});
 }
 
-const ROLES = ['title', 'word-box', 'verse-panel', 'arabic', 'french', 'translation', 'verse-marker', 'verse-number-fr', 'technical-label', 'bismillah', 'qr', 'label'] as const;
+const ROLES = ['title', 'word-box', 'verse-panel', 'arabic', 'french', 'translation', 'verse-marker', 'verse-number-fr', 'technical-label', 'bismillah', 'bismillah-panel', 'qr', 'label'] as const;
 
 async function collectRects(page: Page): Promise<Rect[]> {
   return page.evaluate((roles: readonly string[]) => {
@@ -136,8 +136,9 @@ export async function renderStills(doc: RenderDocument, opts: { fontsDir: string
     const footer = await shoot(BrandingLayer({ branding, scale, width, height }), 'persistent');
     const qrRect = footer.rects.find((r) => r.role === 'qr');
     const labelRect = footer.rects.find((r) => r.role === 'label');
-    if (qrRect && labelRect) add('QR separate from label', !overlaps(qrRect, labelRect) && labelRect.y >= qrRect.y + qrRect.h, `QR bottom ${Math.round(qrRect.y + qrRect.h)} px, label top ${Math.round(labelRect.y)} px`);
-    if (labelRect) add('label centred at the bottom', Math.abs(labelRect.x + labelRect.w / 2 - width / 2) <= 2 * scale && height - (labelRect.y + labelRect.h) <= 120 * scale, `centre ${Math.round(labelRect.x + labelRect.w / 2)}/${width / 2}, ${Math.round(height - labelRect.y - labelRect.h)} px from bottom`);
+    if (qrRect && labelRect) add('QR separate from label', !overlaps(qrRect, labelRect), `QR bottom ${Math.round(qrRect.y + qrRect.h)} px, label top ${Math.round(labelRect.y)} px`);
+    // the vertical position is user-configurable; only horizontal centring is required
+    if (labelRect) add('label horizontally centred', Math.abs(labelRect.x + labelRect.w / 2 - width / 2) <= 2 * scale, `centre ${Math.round(labelRect.x + labelRect.w / 2)}/${width / 2}, ${Math.round(height - labelRect.y - labelRect.h)} px from bottom`);
 
     const bismillahSvg = readFileSync(doc.bismillah.src, 'utf8');
     const scenePngs: string[] = [];
@@ -153,7 +154,7 @@ export async function renderStills(doc: RenderDocument, opts: { fontsDir: string
             : `${name} (${scene.items.map((it) => `${it.surah}:${it.verse} w${it.fromPosition}-${it.toPosition}`).join(', ')})`;
 
       // no overlap between scene content and the footer / title, everything inside the edge margin
-      const blocks = shot.rects.filter((r) => ['title', 'word-box', 'verse-panel', 'bismillah'].includes(r.role));
+      const blocks = shot.rects.filter((r) => ['title', 'word-box', 'verse-panel', 'bismillah-panel'].includes(r.role));
       const all = [...blocks, ...footer.rects.filter((r) => r.role === 'qr' || r.role === 'label')];
       const clashes: string[] = [];
       for (let a = 0; a < all.length; a++) for (let b = a + 1; b < all.length; b++) {

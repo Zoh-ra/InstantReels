@@ -1,6 +1,7 @@
 export * from './fonts.ts';
 export * from './layout.ts';
 export * from './TitleBlock.tsx';
+export * from './surah-title-metrics.ts';
 export * from './WordBoxScene.tsx';
 export * from './FullVerseScene.tsx';
 export * from './IntroScene.tsx';

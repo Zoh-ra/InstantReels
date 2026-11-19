@@ -18,22 +18,29 @@ export interface IntroLayerProps {
 export function IntroSceneLayer({ surah, bismillah, bismillahSvg, title, scale, width, height }: IntroLayerProps) {
   const u = px(scale);
   const w = width * bismillah.widthRatio;
+  const pad = bismillah.backdrop ? 40 * scale : 0;
+  // outer panel (optional backdrop) is centred; the measured calligraphy box keeps exactly widthRatio × width
   const holder: CSSProperties = {
     position: 'absolute',
-    left: (width - w) / 2,
+    left: (width - w) / 2 - pad,
     top: u(bismillah.centerY),
-    width: w,
+    width: w + 2 * pad,
     transform: 'translateY(-50%)',
+    boxSizing: 'border-box',
+    padding: pad,
+    borderRadius: u(28),
+    background: bismillah.backdrop ?? 'transparent',
     color: bismillah.color,
     lineHeight: 0,
-    ...(bismillah.backdrop ? { background: bismillah.backdrop, padding: u(40), boxSizing: 'content-box', marginLeft: u(-40), borderRadius: u(28) } : {}),
   };
   // the SVG is our own traced asset (not user HTML); sized by its container
   const svg = bismillahSvg.replace('<svg ', '<svg width="100%" style="display:block;height:auto" ');
   return (
     <>
       {title.enabled && title.showOnIntro && <TitleBlock surah={surah} title={title} scale={scale} />}
-      <div style={holder} data-role="bismillah" dangerouslySetInnerHTML={{ __html: svg }} />
+      <div style={holder} data-role="bismillah-panel">
+        <div data-role="bismillah" style={{ width: w }} dangerouslySetInnerHTML={{ __html: svg }} />
+      </div>
     </>
   );
 }

@@ -25,7 +25,7 @@ export const PRESETS: Record<EncodePreset['name'], EncodePreset> = {
  *  + persistent branding still
  *  + audio (padded/trimmed to the exact duration)
  */
-export function buildComposeArgs(doc: RenderDocument, stills: { persistentPng: string; scenePngs: string[] }, preset: EncodePreset, outPath: string): string[] {
+export function buildComposeArgs(doc: RenderDocument, stills: { persistentPng: string; scenePngs: string[] }, preset: EncodePreset, outPath: string, opts: { maxrateKbps?: number } = {}): string[] {
   if (stills.scenePngs.length !== doc.scenes.length) throw new Error('stills/scenes mismatch');
   const { fps, totalFrames } = doc;
   const W = preset.width;
@@ -39,9 +39,15 @@ export function buildComposeArgs(doc: RenderDocument, stills: { persistentPng: s
     if (doc.background.loop) args.push('-stream_loop', '-1');
     args.push('-i', doc.background.src);
     const bg = doc.background;
+    // Same maths as the browser preview: CSS brightness(k) multiplies RGB by k = 1 + brightness,
+    // CSS blur(r) is a Gaussian of standard deviation r (design px, scaled to the output size).
+    const k = Math.max(0, 1 + bg.brightness);
+    const sigma = (bg.blur * W) / 1080;
     filters.push(
-      `[0:v]fps=${fps},scale=${W}:${H}:force_original_aspect_ratio=increase:flags=lanczos,crop=${W}:${H},setsar=1,` +
-        `eq=brightness=${bg.brightness.toFixed(3)},${bg.blur > 0 ? `boxblur=${Math.max(1, Math.round((bg.blur * W) / 1080))}:1,` : ''}drawbox=x=0:y=0:w=iw:h=ih:color=black@${bg.dimOpacity.toFixed(3)}:t=fill,` +
+      `[0:v]fps=${fps},scale=${W}:${H}:force_original_aspect_ratio=increase:flags=lanczos,crop=${W}:${H},setsar=1,format=gbrp,` +
+        `${Math.abs(k - 1) > 1e-3 ? `colorchannelmixer=rr=${k.toFixed(4)}:gg=${k.toFixed(4)}:bb=${k.toFixed(4)},` : ''}` +
+        `${sigma > 0 ? `gblur=sigma=${sigma.toFixed(2)},` : ''}` +
+        `drawbox=x=0:y=0:w=iw:h=ih:color=black@${bg.dimOpacity.toFixed(3)}:t=fill,` +
         `trim=end_frame=${totalFrames},setpts=PTS-STARTPTS,format=gbrp[bg]`,
     );
   } else {
@@ -81,7 +87,9 @@ export function buildComposeArgs(doc: RenderDocument, stills: { persistentPng: s
     '-frames:v', String(totalFrames),
     '-r', String(fps), '-fps_mode', 'cfr',
     '-c:v', 'libx264', '-preset', preset.x264Preset, '-crf', String(preset.crf),
-    '-maxrate', preset.maxrate, '-bufsize', preset.bufsize,
+    ...(opts.maxrateKbps
+      ? ['-maxrate', `${Math.round(opts.maxrateKbps)}k`, '-bufsize', `${Math.round(opts.maxrateKbps * 2)}k`]
+      : ['-maxrate', preset.maxrate, '-bufsize', preset.bufsize]),
     '-profile:v', 'high', '-level:v', preset.level, '-pix_fmt', 'yuv420p',
     '-color_primaries', 'bt709', '-color_trc', 'bt709', '-colorspace', 'bt709',
   );
@@ -90,9 +98,9 @@ export function buildComposeArgs(doc: RenderDocument, stills: { persistentPng: s
   return args;
 }
 
-export async function compose(doc: RenderDocument, stills: { persistentPng: string; scenePngs: string[] }, preset: EncodePreset, outPath: string, onProgress?: (frame: number) => void, signal?: AbortSignal): Promise<number> {
+export async function compose(doc: RenderDocument, stills: { persistentPng: string; scenePngs: string[] }, preset: EncodePreset, outPath: string, onProgress?: (frame: number) => void, signal?: AbortSignal, maxrateKbps?: number): Promise<number> {
   const t0 = performance.now();
-  await ffmpeg(buildComposeArgs(doc, stills, preset, outPath), {
+  await ffmpeg(buildComposeArgs(doc, stills, preset, outPath, maxrateKbps ? { maxrateKbps } : {}), {
     ...(signal ? { signal } : {}),
     onStderr: (s) => {
       const m = /frame=\s*(\d+)/.exec(s);
@@ -100,4 +108,22 @@ export async function compose(doc: RenderDocument, stills: { persistentPng: stri
     },
   });
   return performance.now() - t0;
+}
+
+/** Minimum video bitrates below which Quranic text would visibly degrade (never crossed). */
+export const QUALITY_FLOOR_KBPS: Record<EncodePreset['name'], number> = { '1080p30': 6000, '2160p30': 16000 };
+const AUDIO_KBPS = 192;
+
+/**
+ * Export size plan. If the output can fit the Storage upload limit without going below the
+ * quality floor, the encoder's maximum bitrate is capped to fit; otherwise the full-quality file
+ * is delivered by the worker's local storage (never silently downgraded).
+ */
+export function planDelivery(preset: EncodePreset, durationSec: number, uploadLimitBytes: number): { target: 'storage' | 'local'; maxrateKbps: number; budgetKbps: number } {
+  const presetMax = Number.parseInt(preset.maxrate, 10) * 1000;
+  // 4 % margin for container overhead and rate-control overshoot
+  const budgetKbps = (uploadLimitBytes * 0.96 * 8) / 1000 / durationSec - AUDIO_KBPS;
+  if (budgetKbps >= presetMax) return { target: 'storage', maxrateKbps: presetMax, budgetKbps };
+  if (budgetKbps >= QUALITY_FLOOR_KBPS[preset.name]) return { target: 'storage', maxrateKbps: Math.floor(budgetKbps), budgetKbps };
+  return { target: 'local', maxrateKbps: presetMax, budgetKbps };
 }

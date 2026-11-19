@@ -14,6 +14,7 @@ import { useSignedUrls, webUrl } from '@/lib/assets-client';
 import { cn } from '@/lib/utils';
 import { editorReducer } from './editor-state';
 import { ExportPanel } from './ExportPanel';
+import { LayoutAudit, type LayoutIssue } from './LayoutAudit';
 import { MediaPanel } from './MediaPanel';
 import { BrandPanel, ContentPanel, StylePanel, TimingPanel } from './panels';
 import { SceneTimeline, Transport } from './Timeline';
@@ -33,6 +34,7 @@ export function EditorShell({ project, initialDoc, bismillahSvg, surahName }: { 
   const [save, setSave] = useState<SaveState>(project ? 'saved' : 'local');
   const [saveError, setSaveError] = useState<string | null>(null);
   const [overflow, setOverflow] = useState(false);
+  const [layoutIssues, setLayoutIssues] = useState<LayoutIssue[]>([]);
   const version = useRef(project?.version ?? 0);
   const first = useRef(true);
   const audioEl = useRef<HTMLAudioElement>(null);
@@ -117,14 +119,14 @@ export function EditorShell({ project, initialDoc, bismillahSvg, surahName }: { 
   const preview = (cls: string) => (
     <ReelPreview doc={doc} bismillahSvg={bismillahSvg} frame={frame} playing={playing} animate={playing} backgroundUrl={backgroundUrl} qrUrl={qrUrl} className={cls} onOverflow={setOverflow} />
   );
-  const exportWarning = overflow ? 'Le texte de la scène affichée ne tient pas : réduisez la taille ou divisez la scène.' : null;
+  const exportWarning = overflow ? 'Le texte de la scène affichée ne tient pas : réduisez la taille ou divisez la scène.' : layoutIssues.length ? `${layoutIssues.length} problème(s) de mise en page à corriger avant l’export (voir l’onglet Export).` : null;
   const panels = {
     content: <ContentPanel doc={doc} dispatch={dispatch} currentScene={currentScene} onSelectScene={selectScene} surahName={surahName} />,
     style: <StylePanel doc={doc} dispatch={dispatch} />,
     brand: <BrandPanel doc={doc} dispatch={dispatch} />,
     media: <MediaPanel doc={doc} dispatch={dispatch} projectId={project?.id ?? null} enabled={!!project} />,
     timing: <TimingPanel doc={doc} dispatch={dispatch} onSeek={seek} />,
-    export: <ExportPanel projectId={project?.id ?? null} ensureSaved={ensureSaved} hasUnsavedWarnings={exportWarning} />,
+    export: <ExportPanel projectId={project?.id ?? null} ensureSaved={ensureSaved} layoutIssues={layoutIssues} durationSec={doc.totalFrames / doc.fps} />,
   };
   const timeline = (compact: boolean) => (
     <SceneTimeline doc={doc} frame={frame} onSeek={seek} currentScene={currentScene} onBoundary={(i, f) => dispatch({ type: 'boundary', index: i, frame: f })} audioUrl={audioUrl} compact={compact} />
@@ -133,6 +135,7 @@ export function EditorShell({ project, initialDoc, bismillahSvg, surahName }: { 
   return (
     <div className="flex h-dvh flex-col bg-background">
       {audioUrl && <audio ref={audioEl} src={audioUrl} preload="auto" className="hidden" />}
+      <LayoutAudit doc={doc} bismillahSvg={bismillahSvg} onIssues={setLayoutIssues} />
       <header className="safe-top flex h-14 shrink-0 items-center gap-2 border-b border-hairline px-3 lg:px-4">
         <Button asChild variant="ghost" size="icon" aria-label="Retour aux projets">
           <Link href={project ? '/projects' : '/'}><ArrowLeft /></Link>
@@ -174,7 +177,7 @@ export function EditorShell({ project, initialDoc, bismillahSvg, surahName }: { 
         </aside>
         <main className="nebula-glow flex min-h-0 flex-col items-center justify-center gap-2 p-6">
           <div className="min-h-0 flex-1" style={{ aspectRatio: '9 / 16' }}>{preview('h-full')}</div>
-          {overflow && <p className="text-xs text-amber" role="status">⚠ {exportWarning}</p>}
+          {exportWarning && <p className="text-xs text-amber" role="status">⚠ {exportWarning}</p>}
         </main>
         <aside className="min-h-0 border-l border-hairline bg-singularity" aria-label="Propriétés">
           <Tabs defaultValue="style" className="flex h-full flex-col">
